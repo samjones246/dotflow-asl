@@ -3,7 +3,8 @@ state("RPG_RT", "v0.192")
     int levelid : 0xA2BD0, 0x4;
     int switchesPtr : 0xA2B70, 0x20;
     int variablesPtr : 0xA2B70, 0x20;
-    int startFlag : 0xA2B70, 0x4D;
+    bool startFlag : 0xA2B70, 0x4D;
+    int frames : 0x9FB8C, 0x0, 0x8;
 }
 
 startup
@@ -25,14 +26,21 @@ startup
 init
 {
     vars.Log("--- INIT ---");
+    int fileSize = modules.First().ModuleMemorySize;
+    vars.Log("Module Size: " + fileSize);
+    if (fileSize == 0xBD000){
+        version = "v0.192";
+    }
+    vars.startFrames = 0;
 }
 
 
 start
 {
     try{
-        if (current.switchesPtr == 0 && current.startFlag == 1 && old.startFlag == 0){
+        if (current.switchesPtr == 0 && current.startFlag && !old.startFlag){
             vars.Log("--- START ---");
+            vars.startFrames = current.frames;
             return true;
         }
     }catch(Exception e){
@@ -54,7 +62,7 @@ split
 reset
 {
     try{
-        return false;
+        return current.frames < old.frames && old.frames != vars.startFrames;
     }catch(Exception e){
         vars.Log(e);
         throw;
