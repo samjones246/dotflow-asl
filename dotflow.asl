@@ -17,9 +17,42 @@ startup
     });
     try{
         vars.Log("--- STARTUP ---");
+
+        Dictionary<int, string> effectNames = new Dictionary<int, string>() {
+            {0, "Headphones"},
+            {1, "Iron Pipe"},
+            {2, "Ghost"},
+            {3, "Mono Eye"},
+            {4, "Diving Helmet"},
+            {5, "Cat"},
+            {6, "Broom"},
+            {7, "Watering Can"},
+            {8, "Whistle"},
+            {9, "Gas Mask"},
+            {161, "Machine"},
+            {162, "Daruma"},
+            {163, "Slime"},
+            {164, "Arm"},
+            {165, "Viscera"},
+            {166, "Psychedelic"},
+            {167, "Handgun"},
+            {168, "Corpse"},
+            {169, "Black Hood"},
+            {170, "Uniform"},
+            {171, "Television"},
+            {172, "Tattoo"},
+            {173, "Plant"},
+            {174, "Dress"}
+        };
+
+        settings.Add("splitEffect", true, "Split on effect acquired");
+        foreach (int index in effectNames.Keys)
+        {
+            settings.Add("switch" + index, false, effectNames[index], "splitEffect");
+        }
     }catch(Exception e){
         vars.Log(e);
-        throw;
+        throw e;
     }
 }
 
@@ -27,11 +60,36 @@ init
 {
     vars.Log("--- INIT ---");
     int fileSize = modules.First().ModuleMemorySize;
-    vars.Log("Module Size: " + fileSize);
+    vars.Log("Module Size: " + fileSize.ToString("X"));
     if (fileSize == 0xBD000){
         version = "v0.192";
     }
     vars.startFrames = 0;
+    vars.firstUpdate = true;
+}
+
+update
+{
+    try{
+        if (vars.firstUpdate){
+            vars.firstUpdate = false;
+            current.switches = null;
+            current.variables = null;
+        }
+        if (current.switchesPtr == 0){
+            return;
+        }
+        current.switches = game.ReadBytes(new IntPtr(current.switchesPtr), 400);
+        current.variables = new int[200];
+        byte[] varsBytes = game.ReadBytes(new IntPtr(current.variablesPtr), 200 * 4);
+        for (int i = 0; i < 200; i++)
+        {
+            current.variables[i] = BitConverter.ToInt32(varsBytes, i * 4);
+        }
+    }catch(Exception e){
+        vars.Log(e);
+        throw e;
+    }
 }
 
 
@@ -45,17 +103,26 @@ start
         }
     }catch(Exception e){
         vars.Log(e);
-        throw;
+        throw e;
     }
 }
 
 split
 {
     try{
+        if (current.switches == null || old.switches == null){
+            return false;
+        }
+        for (int i=0;i<400;i++){
+            if (current.switches[i] != old.switches[i]){
+                vars.Log("Switch " + (i+1) + ": " + (current.switches[i] == 1 ? "ON" : "OFF"));
+                return current.switches == 1 && settings["switch" + i];
+            }
+        }
         return false;
     }catch(Exception e){
         vars.Log(e);
-        throw;
+        throw e;
     }
 }
 
@@ -65,7 +132,7 @@ reset
         return current.frames < old.frames && old.frames != vars.startFrames;
     }catch(Exception e){
         vars.Log(e);
-        throw;
+        throw e;
     }
 }
 
@@ -75,7 +142,7 @@ exit
         vars.Log("--- EXIT ---");
     }catch(Exception e){
         vars.Log(e);
-        throw;
+        throw e;
     }
 }
 
@@ -85,6 +152,6 @@ shutdown
         vars.Log("--- SHUTDOWN ---");
     }catch(Exception e){
         vars.Log(e);
-        throw;
+        throw e;
     }
 }
