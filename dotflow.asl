@@ -45,6 +45,8 @@ startup
             {174, "Dress"}
         };
 
+        vars.effectSwitches = effectNames.Keys;
+
         settings.Add("splitEffect", true, "Split on effect acquired");
         foreach (int index in effectNames.Keys)
         {
@@ -86,6 +88,10 @@ update
         {
             current.variables[i] = BitConverter.ToInt32(varsBytes, i * 4);
         }
+
+        if (current.levelid != old.levelid) {
+            vars.Log("Level changed: " + old.levelid + " -> " + current.levelid);
+        }
     }catch(Exception e){
         vars.Log(e);
         throw e;
@@ -110,13 +116,15 @@ start
 split
 {
     try{
-        if (current.switches == null || old.switches == null){
+        if (current.switchesPtr == 0 || old.switchesPtr == 0){
             return false;
         }
-        for (int i=0;i<400;i++){
+
+        // Split on effect acquired
+        foreach (int i in vars.effectSwitches){
             if (current.switches[i] != old.switches[i]){
                 vars.Log("Switch " + (i+1) + ": " + (current.switches[i] == 1 ? "ON" : "OFF"));
-                return current.switches == 1 && settings["switch" + i];
+                return current.switches[i] == 1 && settings["switch" + i];
             }
         }
         return false;
