@@ -7,6 +7,7 @@ LiveSplit autosplitter for .flow, a Yume Nikki fangame.
 - Split points:
   - Effect acquired
   - Normal/Maid/True Endings
+  - Arms warp
 
 ## TODO
  - Auto split in convenient places
