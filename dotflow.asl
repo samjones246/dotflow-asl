@@ -33,7 +33,7 @@ startup
             {161, "Machine"},
             {162, "Daruma"},
             {163, "Slime"},
-            {164, "Arm"},
+            {164, "Arms"},
             {165, "Viscera"},
             {166, "Psychedelic"},
             {167, "Handgun"},
@@ -53,6 +53,8 @@ startup
         {
             settings.Add("switch" + index, false, effectNames[index], "splitEffect");
         }
+
+        settings.Add("splitWarp", true, "Split on Arms warp");
     }catch(Exception e){
         vars.Log(e);
         throw e;
@@ -152,6 +154,11 @@ split
                 vars.Log("Maid Ending");
                 return true;
             }
+        }
+
+        if (current.switches[53] == 1 && old.switches[53] == 0){
+            vars.Log("Arms warp");
+            return settings["splitWarp"];
         }
         return false;
     }catch(Exception e){
