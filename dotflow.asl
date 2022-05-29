@@ -1,10 +1,11 @@
 state("RPG_RT", "v0.192")
 {
-    int levelid : 0xA2BD0, 0x4;
+    int levelID : 0xA2BD0, 0x4;
     int switchesPtr : 0xA2B70, 0x20;
-    int variablesPtr : 0xA2B70, 0x20;
+    int variablesPtr : 0xA2B70, 0x28;
     bool startFlag : 0xA2B70, 0x4D;
     int frames : 0x9FB8C, 0x0, 0x8;
+    int eventID : 0xA2B94, 0x4, 0x8, 0x4, 0x0, 0x1C;
 }
 
 startup
@@ -89,12 +90,18 @@ update
             current.variables[i] = BitConverter.ToInt32(varsBytes, i * 4);
         }
 
-        if (current.levelid != old.levelid) {
-            vars.Log("Level changed: " + old.levelid + " -> " + current.levelid);
+        if (current.levelID != old.levelID) {
+            vars.Log("Level changed: " + old.levelID + " -> " + current.levelID);
         }
     }catch(Exception e){
         vars.Log(e);
         throw e;
+    }
+
+    for (int i=0;i<400;i++){
+        if (current.switches[i] < 2 && old.switches[i] < 2 && current.switches[i] != old.switches[i]){
+           vars.Log("Switch " + (i+1) + ": " + (current.switches[i] == 1 ? "ON" : "OFF"));
+        }
     }
 }
 
@@ -125,6 +132,25 @@ split
             if (current.switches[i] != old.switches[i]){
                 vars.Log("Switch " + (i+1) + ": " + (current.switches[i] == 1 ? "ON" : "OFF"));
                 return current.switches[i] == 1 && settings["switch" + i];
+            }
+        }
+
+        // Ending Splits
+        if (current.levelID == 2 && current.eventID == 5 && old.eventID != 5){
+            vars.Log("Door interact");
+            vars.Log(current.variables[21]);
+            if (current.variables[21] >= 24){
+                vars.Log("Normal Ending");
+                return true;
+            }
+            if (current.switches[338] == 1){
+                vars.Log("True Ending");
+                return true;
+            }
+
+            if (current.switches[334] == 1){
+                vars.Log("Maid Ending");
+                return true;
             }
         }
         return false;
